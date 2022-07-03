@@ -27,7 +27,7 @@ func Start(host string, port int) {
 	router.Handle("/name/{param}", dataHandler).Methods(http.MethodGet)
 
 	router.HandleFunc("/bad", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusBadGateway)
+		w.WriteHeader(http.StatusInternalServerError)
 	}).Methods(http.MethodGet)
 
 	router.HandleFunc("/data", func(w http.ResponseWriter, r *http.Request) {
@@ -36,8 +36,8 @@ func Start(host string, port int) {
 
 		param, ok := r.PostForm["PARAM"]
 
-		if ok {
-			fmt.Fprintf(w, "I got message\n%s", param)
+		if ok && len(param) > 0 {
+			fmt.Fprintf(w, "I got message\n%s", param[0])
 		}
 	}).Methods(http.MethodPost)
 
