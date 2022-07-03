@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/GolangUnited/helloweb/cmd/muxing/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -20,6 +21,60 @@ main function reads host/port from env just for an example, flavor it following 
 // Start /** Starts the web server listener on given host and port.
 func Start(host string, port int) {
 	router := mux.NewRouter()
+
+	dataHandler := &handlers.DataHandler{}
+
+	router.Handle("/name/{param}", dataHandler).Methods(http.MethodGet)
+
+	router.HandleFunc("/bad", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadGateway)
+	}).Methods(http.MethodGet)
+
+	router.HandleFunc("/data", func(w http.ResponseWriter, r *http.Request) {
+		r.ParseForm()
+		w.WriteHeader(http.StatusOK)
+
+		param, ok := r.PostForm["PARAM"]
+
+		if ok {
+			fmt.Fprintf(w, "I got message\n%s", param)
+		}
+	}).Methods(http.MethodPost)
+
+	router.HandleFunc("/headers", func(w http.ResponseWriter, r *http.Request) {
+		r.ParseForm()
+
+		a, ok := r.Header["a"]
+
+		if !ok {
+			return
+		}
+
+		b, ok := r.Header["b"]
+
+		if !ok {
+			return
+		}
+
+		aNum, err := strconv.Atoi(a[0])
+
+		if err != nil {
+			return
+		}
+
+		bNum, err := strconv.Atoi(b[0])
+
+		if err != nil {
+			return
+		}
+
+		w.Header().Add("a+b", strconv.Itoa(aNum+bNum))
+		w.WriteHeader(http.StatusOK)
+	}).Methods(http.MethodPost)
+
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 
 	log.Println(fmt.Printf("Starting API server on %s:%d\n", host, port))
 	if err := http.ListenAndServe(fmt.Sprintf("%s:%d", host, port), router); err != nil {
