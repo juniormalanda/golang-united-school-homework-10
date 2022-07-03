@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -31,38 +32,26 @@ func Start(host string, port int) {
 	}).Methods(http.MethodGet)
 
 	router.HandleFunc("/data", func(w http.ResponseWriter, r *http.Request) {
-		r.ParseForm()
-		w.WriteHeader(http.StatusOK)
+		data, err := ioutil.ReadAll(r.Body)
 
-		param, ok := r.PostForm["PARAM"]
-
-		if ok && len(param) > 0 {
-			fmt.Fprintf(w, "I got message\n%s", param[0])
+		if err != nil {
+			panic(err)
 		}
+
+		fmt.Fprintf(w, "I got message:\n%s", data)
 	}).Methods(http.MethodPost)
 
 	router.HandleFunc("/headers", func(w http.ResponseWriter, r *http.Request) {
-		r.ParseForm()
+		a := r.Header.Get("a")
+		b := r.Header.Get("b")
 
-		a, ok := r.Header["a"]
-
-		if !ok {
-			return
-		}
-
-		b, ok := r.Header["b"]
-
-		if !ok {
-			return
-		}
-
-		aNum, err := strconv.Atoi(a[0])
+		aNum, err := strconv.Atoi(a)
 
 		if err != nil {
 			return
 		}
 
-		bNum, err := strconv.Atoi(b[0])
+		bNum, err := strconv.Atoi(b)
 
 		if err != nil {
 			return
